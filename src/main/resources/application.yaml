@@ -1,3 +1,46 @@
+server:
+  port: 8080
+
 spring:
   application:
     name: backend-banco-cloud
+
+  # Configuración Base de Datos (Lista para funcionar; puedes cambiar url/username/password por tu BD Cloud)
+  datasource:
+    url: ${DB_URL:jdbc:h2:mem:bancoclouddb;DB_CLOSE_DELAY=-1}
+    username: ${DB_USER:sa}
+    password: ${DB_PASSWORD:}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+
+  # Conexión a RabbitMQ y Confirmación Manual (ACK/NACK -> 20% de la pauta)
+  rabbitmq:
+    host: ${RABBIT_HOST:localhost}
+    port: 5672
+    username: ${RABBIT_USER:admin}
+    password: ${RABBIT_PASS:admin123}
+    listener:
+      simple:
+        acknowledge-mode: manual
+        default-requeue-rejected: false
+
+# Configuración centralizada de Colas, Exchanges y Routing Keys (12% de la pauta)
+app:
+  security:
+    jwt-enabled: false # Ponlo en true cuando conectes el issuer-uri real de tu IDaaS
+  rabbitmq:
+    exchanges:
+      main: banco.cheques.exchange
+      dlx: banco.cheques.dlx
+    queues:
+      emision: banco.cheques.emision.queue
+      devolucion: banco.cheques.devolucion.queue
+      acceso: banco.usuarios.acceso.queue
+      dlq: banco.cheques.dlq
+    routing-keys:
+      emision: banco.routing.cheque.emision
+      devolucion: banco.routing.cheque.devolucion
+      acceso: banco.routing.usuario.acceso
+      dlq: banco.routing.dlq
